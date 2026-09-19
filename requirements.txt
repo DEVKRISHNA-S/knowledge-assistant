@@ -1,0 +1,14 @@
+requests>=2.31
+python-dotenv>=1.0
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+alembic>=1.13
+qdrant-client>=1.9
+fastapi>=0.111
+uvicorn>=0.30
+huggingface-hub>=0.23
+sentence-transformers>=3.0
+openai>=1.30            # used only as an OpenAI-compatible client for Ollama, no OpenAI key needed
+jupyter>=1.0
+pandas>=2.2
+tqdm>=4.66
