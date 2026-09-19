@@ -3,7 +3,7 @@ Ingestion pipeline: runs a connector, upserts results into `documents`,
 and updates `sync_state` with the new cursor so the next run is incremental.
 
 Usage:
-    python -m scripts.run_sync --source github
+    python -m scripts.run_sync --source github --max-items 50
 """
 
 import argparse
@@ -61,7 +61,7 @@ def upsert_document(session, raw_item) -> int:
     return result.scalar()
 
 
-def run_github_sync():
+def run_github_sync(max_items: int | None = None):
     token = os.environ["GITHUB_TOKEN"]
     repos = os.environ.get("GITHUB_REPOS", "psf/requests").split(",")
     connector = GitHubConnector(token=token, repos=[r.strip() for r in repos])
@@ -76,6 +76,9 @@ def run_github_sync():
         count += 1
         if count % 10 == 0:
             print(f"[run_sync] upserted {count} documents so far...")
+        if max_items and count >= max_items:
+            print(f"[run_sync] hit max_items={max_items}, stopping early (test mode)")
+            break
 
     new_cursor = connector.get_next_cursor()
     set_cursor(session, "github", new_cursor)
@@ -86,9 +89,11 @@ def run_github_sync():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", choices=["github", "slack"], required=True)
+    parser.add_argument("--max-items", type=int, default=None,
+                         help="Stop after N items (useful for quick testing)")
     args = parser.parse_args()
 
     if args.source == "github":
-        run_github_sync()
+        run_github_sync(max_items=args.max_items)
     else:
         raise NotImplementedError("Slack connector comes in a later step")
